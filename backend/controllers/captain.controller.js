@@ -1,0 +1,65 @@
+const captainModel= require('../models/captain.model')
+const captainService = require('../services/captain.services');
+const {validationResult} = require('express-validator');    
+const blackListTokenModel= require('../models/blacklistToken.model');   
+
+module.exports.registerCaptain= async (req,res,next) =>{
+    const errors= validationResult(req); //COLLECTS ALL VALIDATION RESULT from req
+    if(!errors.isEmpty()){
+        return res.status(400).json({erros:errors.array()}); //send all validation errors to client 
+    }
+    const {fullname,email,password,vehicle} = req.body;
+    const isCaptainAlreadyExist = await captainModel.findOne({email});
+
+    if(isCaptainAlreadyExist){
+        return  res.status(400).json({message:'Captain with this email already exists'});
+    }
+
+    const hashedPassword = await captainModel.hashPassword(password);   
+    const captain= await captainService.createCaptain({ //passes the prepared data to the service layer
+        firstname: fullname.firstname,
+        lastname: fullname.lastname,
+        email,
+        password:hashedPassword,
+        color:vehicle.color,
+        plate:vehicle.plate,
+        capacity:vehicle.capacity,
+        vehicleType:vehicle.vehicleType
+    });
+
+    const token = captain.generateAuthToken();
+    res.status(201).json({token,captain}) //sends a json object contaning both tokenadn user
+
+}
+module.exports.loginCaptain= async (req,res,next) =>{
+    const errors= validationResult(req); //COLLECTS ALL VALIDATION RESULT from req
+    if(!errors.isEmpty()){
+        return res.status(400).json({erros:errors.array()}); //send all validation errors to client 
+    }   
+    const{email,password}= req.body;
+    const captain = await captainModel.findOne({email}).select('+password');
+    if(!captain){
+        return res.status(400).json({message:'Invalid email or password'});
+    }   
+
+    const isMatch = await captain.comparePassword(password);
+    if(!isMatch){
+        return res.status(400).json({message:'Invalid email or password'});
+    }   
+    const token = captain.generateAuthToken();
+    res.cookie('token',token);
+    res.status(200).json({token,captain}) //sends a json object contaning both tokenadn user
+}
+module.exports.getCaptainProfile= async (req,res,next) =>{
+  
+    res.status(200).json({captain:req.captain});
+}
+
+module.exports.logoutCaptain= async (req,res,next) =>{  
+
+    const token = req.cookies.token || req.headers.authorization?.split(' ')[1];
+    await blackListTokenModel.create({token});
+
+    res.clearCookie('token');
+    res.status(200).json({message:'Logged out successfully'});
+}   
