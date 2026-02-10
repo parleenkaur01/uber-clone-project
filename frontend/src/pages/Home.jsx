@@ -263,9 +263,11 @@ const Home=()=>{
                 <ConfirmRide 
                     createRide={createRide} 
                     pickup={pickup}
+                    destination={destination}
                     fare={fare}
                     vehicleType={vehicleType}
-                    destination={destination}
+                   
+                    
                     setConfirmRidePanel={setConfirmRidePanel} setvehicleFound={setvehicleFound} />
 
             </div>

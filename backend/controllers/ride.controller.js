@@ -13,6 +13,7 @@ module.exports.createRide= async(req,res)=>{
     const {userId,pickup,destination,vehicleType} = req.body;
     try{
         const ride= await rideService.createRide({user:req.user._id,pickup,destination,vehicleType})
+        res.status(201).json(ride);
         
         
 
@@ -23,8 +24,9 @@ module.exports.createRide= async(req,res)=>{
         const captainsInRadius =  await  mapService.getCaptainsInTheRadius(
             pickupCoordinates.ltd,
             pickupCoordinates.lng,
-            100000
+            1000000
         );
+        console.log(captainsInRadius);
 
         ride.otp=""
 
@@ -34,13 +36,13 @@ module.exports.createRide= async(req,res)=>{
             console.log(captain,ride)
            sendMessageToSocketid(captain.socketId,{
                 event:'new-ride',
-                data:rideWithUser
+                data: rideWithUser
            })
             
 
         })
 
-        res.status(201).json(ride);
+        // res.status(201).json(ride);
         
 
 

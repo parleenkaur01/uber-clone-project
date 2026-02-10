@@ -54,7 +54,7 @@ const CaptainHome = () => {
         // return ()=>clearInterval(locationInterval);
 
         
-    })
+    },[])
     socket.on('new-ride',(data)=>{
         console.log(data)
         setRide(data);
